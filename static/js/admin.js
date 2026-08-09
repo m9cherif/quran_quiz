@@ -73,13 +73,19 @@ $("btn-create-key").addEventListener("click", async () => {
 
 $("btn-copy-new-key").addEventListener("click", () => {
   const key = $("create-key-value").value;
-  navigator.clipboard
-    ? navigator.clipboard.writeText(key).then(() => {
-        localStorage.setItem(KEY_STORE, key);
-        adminKey = key;
-        loadCompetitions();
-      })
-    : toast("Copiez la clé manuellement.");
+  if (!key) { toast("Générez d'abord une clé."); return; }
+  if (!navigator.clipboard) {
+    toast("Copiez la clé manuellement depuis le champ.");
+    return;
+  }
+  navigator.clipboard.writeText(key).then(
+    () => {
+      localStorage.setItem(KEY_STORE, key);
+      adminKey = key;
+      loadCompetitions();
+    },
+    () => toast("Copie refusée — copiez la clé manuellement.")
+  );
 });
 
 if (adminKey) $("admin-key").value = adminKey;
@@ -147,7 +153,13 @@ $("btn-create").addEventListener("click", async () => {
 
 async function openCompetition(id) {
   if (ws) ws.close();
-  await loadCompetitionDetail(id);
+  clearInterval(teller);
+  try {
+    await loadCompetitionDetail(id);
+  } catch (err) {
+    toast("Impossible d'ouvrir la compétition : " + (err.message || err));
+    return;
+  }
   show("view-manage");
   ws = WSClient("/ws/competition/" + id, onWsMessage, onWsStatus);
   ws.connect();
@@ -232,6 +244,7 @@ function updateStatus(status) {
   $("comp-status").className = "badge badge-" + status;
   $("comp-status").textContent = STATUS_LABELS[status] || status;
   renderStatusButtons(status);
+  renderQuestions();
 }
 
 $("btn-back").addEventListener("click", () => {
@@ -242,7 +255,8 @@ $("btn-back").addEventListener("click", () => {
 
 /* ---------------- status controls ---------------- */
 
-async function adminPost(path, okMessage) {
+async function adminPost(path, okMessage, btn) {
+  if (btn) { btn.disabled = true; btn.classList.add("loading"); }
   try {
     const data = await API.post(path, {}, adminKey);
     if (okMessage) toast(okMessage);
@@ -250,35 +264,41 @@ async function adminPost(path, okMessage) {
   } catch (err) {
     toast(err.message);
     return null;
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove("loading"); }
   }
 }
 
-$("btn-start").addEventListener("click", async () => {
-  const data = await adminPost(
+$("btn-start").addEventListener("click", () =>
+  adminPost(
     "/api/admin/competitions/" + currentComp.id + "/start",
-    "Compétition démarrée !"
-  );
-  if (data) updateStatus("running");
-});
+    "Compétition démarrée !",
+    $("btn-start")
+  ).then((data) => { if (data) updateStatus("running"); })
+);
 $("btn-pause").addEventListener("click", () =>
-  adminPost("/api/admin/competitions/" + currentComp.id + "/pause", "⏸ En pause")
+  adminPost("/api/admin/competitions/" + currentComp.id + "/pause", "⏸ En pause", $("btn-pause"))
 );
 $("btn-resume").addEventListener("click", () =>
-  adminPost("/api/admin/competitions/" + currentComp.id + "/resume", "Reprise")
+  adminPost("/api/admin/competitions/" + currentComp.id + "/resume", "Reprise", $("btn-resume"))
 );
 $("btn-finish").addEventListener("click", async () => {
   if (!confirm("Terminer la compétition ? Les participants ne pourront plus répondre.")) return;
   const data = await adminPost(
     "/api/admin/competitions/" + currentComp.id + "/finish",
-    "🏁 Compétition terminée"
+    "🏁 Compétition terminée",
+    $("btn-finish")
   );
   if (data) updateStatus("finished");
 });
 
 $("btn-copy-code").addEventListener("click", () => {
-  navigator.clipboard
-    ? navigator.clipboard.writeText(currentComp.code).then(() => toast("Code copié ✓"))
-    : toast(currentComp.code);
+  if (!currentComp) return;
+  if (!navigator.clipboard) { toast("Code : " + currentComp.code); return; }
+  navigator.clipboard.writeText(currentComp.code).then(
+    () => toast("Code copié ✓"),
+    () => toast("Code : " + currentComp.code)
+  );
 });
 
 /* ---------------- live question ---------------- */
@@ -321,9 +341,13 @@ function updateLiveCount() {
 /* ---------------- questions ---------------- */
 
 async function loadQuestions(competitionId) {
-  const rows = await API.get("/api/admin/competitions/" + competitionId + "/questions", adminKey);
-  questions = rows || [];
-  renderQuestions();
+  try {
+    const rows = await API.get("/api/admin/competitions/" + competitionId + "/questions", adminKey);
+    questions = rows || [];
+    renderQuestions();
+  } catch (err) {
+    toast("Questions indisponibles : " + (err.message || err));
+  }
 }
 
 function renderQuestions() {
@@ -342,7 +366,7 @@ function renderQuestions() {
         '<div class="question-row"><div class="qnum">' + q.position + "</div>" +
         '<div class="qbody"><div class="qtype">' + q.type.replace("_", " ") + " · " + q.duration_seconds + " s</div>" +
         esc(q.text) + correct + "</div>" +
-        '<button class="btn btn-primary" data-launch="' + q.id + '" ' + (canLaunch() ? "" : "disabled") + ">▶ Lancer</button>" +
+        '<button class="btn btn-primary" data-launch="' + q.id + '">▶ Lancer</button>' +
         '<button class="btn btn-ghost" data-del="' + q.id + '">🗑</button></div>'
       );
     })
@@ -355,11 +379,14 @@ function renderQuestions() {
   );
 }
 
-function canLaunch() {
-  return currentComp && currentComp.status === "running" && !liveInfo;
-}
-
 async function launchQuestion(questionId) {
+  if (!currentComp) { toast("Aucune compétition ouverte."); return; }
+  if (currentComp.status !== "running" || liveInfo) {
+    toast(currentComp.status === "running"
+      ? "⏳ Une question est déjà en cours, attendez sa fin."
+      : "Démarrez la compétition (▶ Démarrer) avant de lancer une question.");
+    return;
+  }
   const data = await adminPost(
     "/api/admin/competitions/" + currentComp.id + "/questions/" + questionId + "/start",
     null
@@ -380,22 +407,29 @@ async function deleteQuestion(questionId) {
 /* ---------------- add question ---------------- */
 
 const TYPE_HAS_CHOICES = ["mcq", "true_false"];
+let lastFormType = null;
+
+function rebuildChoices(addEmptyCount) {
+  $("q-choices-row").innerHTML = "";
+  for (let i = 0; i < addEmptyCount; i++) {
+    $("q-choices-row").appendChild(choiceEditorHtml("", i === 0));
+  }
+}
 
 function questionFormState() {
   const type = $("q-type").value;
   $("q-choices").hidden = !TYPE_HAS_CHOICES.includes(type);
   $("q-correct-wrap").hidden = !["text", "number"].includes(type);
   $("q-audio-wrap").hidden = type !== "audio";
-  if (type === "true_false" && !$("q-choices-row").children.length) {
+  const had = lastFormType;
+  lastFormType = type;
+  if (type === "true_false" && had !== "true_false") {
     $("q-choices-row").innerHTML = "";
     ["Vrai", "Faux"].forEach((label, i) =>
       $("q-choices-row").appendChild(choiceEditorHtml(label, i === 0))
     );
-  }
-  if (type === "mcq" && !$("q-choices-row").children.length) {
-    ["", "", "", ""].forEach((_, i) =>
-      $("q-choices-row").appendChild(choiceEditorHtml("", i === 0))
-    );
+  } else if (type === "mcq" && had !== "mcq") {
+    rebuildChoices(4);
   }
 }
 
@@ -414,6 +448,18 @@ $("btn-add-choice").addEventListener("click", () =>
 );
 
 $("btn-add-question").addEventListener("click", async () => {
+  const btn = $("btn-add-question");
+  btn.disabled = true;
+  btn.classList.add("loading");
+  try {
+    await addQuestionFlow();
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove("loading");
+  }
+});
+
+async function addQuestionFlow() {
   const type = $("q-type").value;
   const text = $("q-text").value.trim();
   if (!text) { toast("Entrez le texte de la question."); return; }
@@ -463,7 +509,7 @@ $("btn-add-question").addEventListener("click", async () => {
   toast("Question ajoutée ✓");
   resetQuestionForm(type);
   loadQuestions(currentComp.id);
-});
+}
 
 function resetQuestionForm(type) {
   $("q-text").value = "";
