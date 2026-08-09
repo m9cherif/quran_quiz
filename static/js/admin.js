@@ -14,11 +14,6 @@ let liveInfo = null;         // {question_id, position, started_at, ends_at, pau
 let teller = null;
 let answeredCount = 0;
 
-const STATUS_LABELS = {
-  draft: "Brouillon", scheduled: "Planifiée", waiting: "Salle d'attente",
-  running: "En cours", paused: "En pause", finished: "Terminée", cancelled: "Annulée",
-};
-
 function show(view) {
   document.querySelectorAll(".view").forEach((v) => (v.hidden = true));
   $(view).hidden = false;
