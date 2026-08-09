@@ -188,6 +188,13 @@ def delete_many(
 
 
 def _db_error(table: str) -> APIError:
+    if table == "admin_keys":
+        return APIError(
+            "DATABASE_ERROR",
+            "Admin key store is not set up: run the admin_keys block of "
+            "supabase/schema.sql in the Supabase SQL editor.",
+            status_code=500,
+        )
     label = _TABLE_LABELS.get(table, "DATABASE_ERROR")
     message = (
         "The requested resource could not be loaded."
