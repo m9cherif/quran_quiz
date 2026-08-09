@@ -1,0 +1,36 @@
+# Render Blueprint — deploy the whole app from this repo.
+#
+# How to use:
+#   1. Push this repository to GitHub.
+#   2. In Render dashboard: New > Blueprint, connect this repo.
+#   3. Render creates the service from this file. Fill the env vars marked
+#      "sync: false" in the dashboard (they come from your Supabase project).
+#   4. Apply; the service auto-deploys.
+#
+# IMPORTANT: keep instance count = 1 (default). The server keeps live game
+# state (active question timer, leaderboard cache) in memory, which requires
+# a single instance.
+
+services:
+  - type: web
+    name: quran-quiz-server
+    runtime: python
+    plan: free                 # works for testing; use "starter" for reliable WebSockets
+    pythonVersion: 3.12.4
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false            # set manually: https://xxxx.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false            # set manually (NEVER used client-side)
+      - key: SUPABASE_KEY
+        sync: false            # optional anon key (reserved for future use)
+      - key: ADMIN_API_KEY
+        sync: false            # set manually: long random string
+      - key: CORS_ORIGINS
+        sync: false            # e.g. https://quran-quiz-server.onrender.com
+      - key: LOG_LEVEL
+        value: INFO
