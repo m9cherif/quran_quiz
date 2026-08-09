@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Quran Quiz — Salle{% endblock %}
+{% block body %}
+<header class="topbar">
+  <a class="topbar-brand" href="/">🕌 <strong>Quran</strong>Quiz</a>
+  <button id="btn-leave" class="btn btn-ghost">Quitter</button>
+</header>
+<main class="room" data-competition="{{ competition_id }}">
+
+  <!-- waiting -->
+  <section id="view-waiting" class="view" hidden>
+    <div class="card card-center waiting-card">
+      <div class="spinner"></div>
+      <h2 id="room-name">…</h2>
+      <p class="waiting-status" id="room-status">En attente du démarrage…</p>
+      <div class="waiting-meta">
+        <span class="chip" id="room-code-chip"></span>
+        <span class="chip" id="room-players">👥 0 connectés</span>
+      </div>
+      <p class="hint">Vous êtes <strong id="room-myname"></strong> — le quiz démarre dès que l'organisateur appuie sur Démarrer.</p>
+    </div>
+  </section>
+
+  <!-- question -->
+  <section id="view-question" class="view" hidden>
+    <div class="card question-card">
+      <div class="q-head">
+        <span class="chip" id="q-position-chip"></span>
+        <div class="timer" id="q-timer">
+          <svg viewBox="0 0 120 120">
+            <circle class="timer-track" cx="60" cy="60" r="52"/>
+            <circle class="timer-bar" id="q-timer-bar" cx="60" cy="60" r="52"/>
+          </svg>
+          <span id="q-timer-text">15</span>
+        </div>
+      </div>
+      <p class="q-text" id="q-text"></p>
+      <div id="q-choices" class="choices"></div>
+      <div id="q-text-input" class="field" hidden>
+        <input id="answer-field" type="text" placeholder="Votre réponse…" maxlength="1000" autocomplete="off">
+        <button id="btn-answer-text" class="btn btn-primary btn-big">Envoyer</button>
+      </div>
+      <p id="q-answering" class="hint answering" hidden>⏳ En attente du serveur…</p>
+    </div>
+  </section>
+
+  <!-- feedback -->
+  <section id="view-feedback" class="view" hidden>
+    <div class="card card-center feedback-card" id="feedback-card">
+      <div class="feedback-icon" id="feedback-icon"></div>
+      <h2 id="feedback-title"></h2>
+      <p id="feedback-detail"></p>
+      <button id="btn-continue" class="btn btn-primary" hidden>Continuer</button>
+    </div>
+  </section>
+
+  <!-- results -->
+  <section id="view-results" class="view" hidden>
+    <div class="card card-center">
+      <h2>🏆 Classement final</h2>
+      <div id="final-leaderboard"></div>
+    </div>
+  </section>
+
+</main>
+<div id="toast" class="toast" hidden></div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/room.js"></script>
+{% endblock %}

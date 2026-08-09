@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Quran Quiz — Administration{% endblock %}
+{% block body %}
+<header class="topbar">
+  <a class="topbar-brand" href="/">🕌 <strong>Quran</strong>Quiz</a>
+  <button id="btn-logout-admin" class="btn btn-ghost" hidden>Quitter</button>
+</header>
+
+<!-- Admin unlock -->
+<section id="view-unlock" class="view">
+  <div class="card card-center">
+    <h2>Accès organisateur</h2>
+    <label>Clé d'administration</label>
+    <input id="admin-key" type="password" placeholder="ADMIN_API_KEY" autocomplete="off">
+    <button id="btn-unlock" class="btn btn-primary">Ouvrir la console</button>
+    <p class="hint">La clé est stockée uniquement dans ce navigateur.</p>
+  </div>
+</section>
+
+<!-- Competition list -->
+<section id="view-list" class="view" hidden>
+  <div class="card create-card">
+    <h2>Créer une compétition</h2>
+    <div class="grid-2">
+      <label>Nom
+        <input id="new-name" placeholder="Tajweed Cup 2026" maxlength="120">
+      </label>
+      <label>Code (optionnel)
+        <input id="new-code" placeholder="ex: QURAN2026" maxlength="16" style="text-transform:uppercase">
+      </label>
+    </div>
+    <div class="grid-3">
+      <label>Points bonne réponse
+        <input id="new-points" type="number" value="10" min="0" max="10000">
+      </label>
+      <label>Malus mauvaise réponse
+        <input id="new-negative" type="number" value="-2" min="-10000" max="0">
+      </label>
+      <label class="checkbox-label"><input id="new-speed" type="checkbox"> Bonus rapidité</label>
+    </div>
+    <button id="btn-create" class="btn btn-primary">Créer</button>
+  </div>
+
+  <h2 class="section-title">Mes compétitions</h2>
+  <div id="competition-list" class="list"></div>
+</section>
+
+<!-- Competition management -->
+<section id="view-manage" class="view" hidden>
+  <button id="btn-back" class="btn btn-ghost">← Retour</button>
+  <div class="card comp-header">
+    <div class="comp-title">
+      <h2 id="comp-name"></h2>
+      <div class="comp-meta">
+        <span id="comp-status" class="badge"></span>
+        <button id="btn-copy-code" class="chip" title="Copier le code">#<span id="comp-code"></span></button>
+        <span id="comp-connected" class="chip">👥 0</span>
+      </div>
+    </div>
+    <div class="comp-controls">
+      <button id="btn-start" class="btn btn-success" hidden>▶ Démarrer</button>
+      <button id="btn-pause" class="btn btn-warn" hidden>⏸ Pause</button>
+      <button id="btn-resume" class="btn btn-success" hidden>▶ Reprendre</button>
+      <button id="btn-finish" class="btn btn-danger" hidden>🏁 Terminer</button>
+    </div>
+  </div>
+
+  <div class="panel-group">
+    <div class="card panel-questions">
+      <h3>Question en cours</h3>
+      <div id="live-question">
+        <p class="hint">Aucune question lancée. Lancez une question ci-dessous.</p>
+      </div>
+      <h3>Questions</h3>
+      <div id="questions-list" class="list"></div>
+    </div>
+    <div class="card panel-add">
+      <h3>Ajouter une question</h3>
+      <label>Type
+        <select id="q-type">
+          <option value="mcq">QCM</option>
+          <option value="true_false">Vrai / Faux</option>
+          <option value="text">Texte</option>
+          <option value="number">Nombre</option>
+          <option value="audio">Audio</option>
+        </select>
+      </label>
+      <label>Position
+        <input id="q-position" type="number" value="1" min="1">
+      </label>
+      <label>Texte de la question
+        <textarea id="q-text" rows="2" maxlength="2000"></textarea>
+      </label>
+      <div class="grid-3">
+        <label>Durée (s)
+          <input id="q-duration" type="number" value="15" min="1" max="600">
+        </label>
+        <label>Points
+          <input id="q-points" type="number" min="0" max="10000" placeholder="défaut">
+        </label>
+        <label>Malus
+          <input id="q-negative" type="number" min="-10000" max="0" placeholder="défaut">
+        </label>
+      </div>
+      <div id="q-audio-wrap" class="field" hidden>
+        <label>URL audio
+          <input id="q-audio" placeholder="https://...">
+        </label>
+      </div>
+      <div id="q-correct-wrap" class="field" hidden>
+        <label>Réponse officielle (comparée côté serveur)
+          <input id="q-correct" placeholder="ex: 7 ou Al-Mulk">
+        </label>
+      </div>
+      <div id="q-choices" class="field" hidden>
+        <p class="hint">Choix du QCM — cochez la bonne réponse</p>
+        <div id="q-choices-row" class="choices-editor"></div>
+        <button type="button" id="btn-add-choice" class="btn btn-ghost">+ Choix</button>
+      </div>
+      <label>Explication (après la question)
+        <textarea id="q-explanation" rows="2" maxlength="2000"></textarea>
+      </label>
+      <button id="btn-add-question" class="btn btn-primary">Ajouter</button>
+    </div>
+    <div class="card panel-players">
+      <h3>Participants <span id="players-count" class="chip">0</span></h3>
+      <div id="players-list" class="list"></div>
+    </div>
+    <div class="card panel-score">
+      <h3>Classement</h3>
+      <div id="leaderboard-table"></div>
+    </div>
+  </div>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin.js"></script>
+{% endblock %}

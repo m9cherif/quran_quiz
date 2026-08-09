@@ -64,10 +64,25 @@ Sur Windows, si `uvicorn` n'est pas dans le PATH : `python -m uvicorn main:app -
 En production (Render), le port est fourni par l'environnement — voir `Procfile` :
 `uvicorn main:app --host 0.0.0.0 --port $PORT`.
 
-## 6. Utilisation de `/docs`
+## 6. Interface web (navigateur, mobile/tablette/PC)
 
-Ouvrez `http://127.0.0.1:8000/docs` (Swagger). Tous les modèles Pydantic y sont décrits.
-Cliquez sur l'icône cadenas pour saisir le bearer admin et tester les routes admin.
+L'application UI est servie par le même serveur (Jinja2 + JS vanilla, aucun build Node) :
+
+| URL | Usage |
+|---|---|
+| `/` | Accueil : choisir « Je participe » ou « Administration » |
+| `/join` | Le participant entre le **code** et son **nom** → rejoint la salle |
+| `/room/{competition_id}` | Salle du participant : attente → question (compte à rebours) → feedback → classement |
+| `/admin` | Console organisateur : créations, questions, lancement, pause/reprise/fin, participants, classement |
+
+- Interface **mobile-first** et responsive (cartes tactiles, thème sombre vert/or).
+- Le compte à rebours affiché est dérivé des timestamps serveur ; l'horloge navigateur
+  ne valide rien.
+- La clé admin n'est saisie que dans la console `/admin` (stockée dans le navigateur localement).
+- Le token participant est stocké en `localStorage` ; le rechargement ou la perte de
+  connexion WebSocket se reconnecte automatiquement.
+
+Tests d'API : `/docs` (Swagger), tous les modèles Pydantic y sont décrits.
 
 ### Flux type
 

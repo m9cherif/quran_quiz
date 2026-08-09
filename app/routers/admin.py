@@ -294,6 +294,22 @@ async def create_question(
     return ok(_question_admin_out(row))
 
 
+@router.get(
+    "/competitions/{competition_id}/questions",
+    response_model=APISuccess[list[QuestionAdminOut]],
+)
+async def list_questions(competition_id: str) -> dict[str, Any]:
+    """List all questions of a competition (with correct answers, admin only)."""
+    _load_competition(competition_id)
+    rows = fetch_many(
+        "questions",
+        conditions={"competition_id": competition_id},
+        order="position",
+        ascending=True,
+    )
+    return ok([_question_admin_out(r) for r in rows])
+
+
 @router.put("/questions/{question_id}", response_model=APISuccess[QuestionAdminOut])
 async def update_question(
     question_id: str, payload: QuestionUpdate

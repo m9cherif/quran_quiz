@@ -116,6 +116,22 @@ def test_health_ok(client):
     assert body["data"]["service"] == "quran-competition-server"
 
 
+def test_ui_pages_render(client):
+    """The web app pages must render (no DB needed)."""
+    checks = {
+        "/": "Quran",
+        "/admin": "btn-unlock",
+        "/join": "join-code",
+        "/room/00000000-0000-0000-0000-000000000000": "view-waiting",
+        "/static/css/app.css": ".landing",
+        "/static/js/room.js": "serverCountdown",
+    }
+    for path, marker in checks.items():
+        response = client.get(path)
+        assert response.status_code == 200, path
+        assert marker in response.text, f"{path} missing {marker}"
+
+
 def test_unknown_route_returns_error_envelope(client):
     response = client.get("/definitely/not/here")
     assert response.status_code == 404

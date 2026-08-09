@@ -13,12 +13,13 @@ from typing import AsyncIterator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app import context
 from app.config import settings
 from app.database import healthcheck_database
 from app.errors import register_exception_handlers
-from app.routers import admin, health, participants, ws
+from app.routers import admin, health, pages, participants, ws
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level, logging.INFO),
@@ -127,13 +128,20 @@ app.add_middleware(
 
 register_exception_handlers(app)
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(health.router)
+app.include_router(pages.router)
 app.include_router(admin.router)
 app.include_router(participants.router)
 app.include_router(ws.router)
 
 
-@app.get("/")
-async def root() -> dict[str, str]:
-    """Service banner."""
-    return {"service": "quran-competition-server", "docs": "/docs", "health": "/health"}
+@app.get("/api")
+async def api_banner() -> dict[str, str]:
+    """API banner (the root page is the web app)."""
+    return {
+        "service": "quran-competition-server",
+        "docs": "/docs",
+        "health": "/health",
+    }

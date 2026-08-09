@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Quran Quiz — Rejoindre{% endblock %}
+{% block body %}
+<main class="center-page">
+  <a class="brand" href="/">
+    <div class="brand-logo">🕌</div>
+    <h1>Quran<span>Quiz</span></h1>
+  </a>
+  <div class="card card-center">
+    <h2>Rejoindre une compétition</h2>
+    <label>Code de la compétition
+      <input id="join-code" placeholder="ex: QURAN2026" maxlength="16" style="text-transform:uppercase; letter-spacing:.2em">
+    </label>
+    <label>Votre nom d'affichage
+      <input id="join-name" placeholder="ex: Ahmed" maxlength="50">
+    </label>
+    <button id="btn-join" class="btn btn-primary btn-big">Entrer</button>
+    <p id="join-error" class="error-text" hidden></p>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/join.js"></script>
+{% endblock %}
