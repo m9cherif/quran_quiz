@@ -10,10 +10,30 @@
 <section id="view-unlock" class="view">
   <div class="card card-center">
     <h2>Accès organisateur</h2>
-    <label>Clé d'administration</label>
-    <input id="admin-key" type="password" placeholder="ADMIN_API_KEY" autocomplete="off">
+    <label>Clé d'administration
+      <input id="admin-key" type="password" placeholder="ADMIN_API_KEY" autocomplete="off">
+    </label>
     <button id="btn-unlock" class="btn btn-primary">Ouvrir la console</button>
+    <button id="btn-show-create-key" class="btn btn-outline">🎫 Je n'ai pas de clé — créer</button>
     <p class="hint">La clé est stockée uniquement dans ce navigateur.</p>
+
+    <div id="create-key-box" hidden>
+      <hr class="divider">
+      <h3>Créer ma clé d'administration</h3>
+      <label>Mot de passe partagé
+        <input id="create-key-password" type="password" placeholder="Mot de passe" autocomplete="off">
+      </label>
+      <label>Étiquette (optionnelle)
+        <input id="create-key-label" placeholder="ex: PC de Sara" maxlength="100">
+      </label>
+      <button id="btn-create-key" class="btn btn-success">Créer ma clé</button>
+      <p id="create-key-error" class="error-text" hidden></p>
+      <div id="create-key-result" hidden>
+        <p class="hint">🔑 Votre nouvelle clé — <strong>copiez-la maintenant</strong> (elle ne sera plus affichée) :</p>
+        <textarea id="create-key-value" rows="2" readonly></textarea>
+        <button id="btn-copy-new-key" class="btn btn-ghost">📋 Copier et ouvrir la console</button>
+      </div>
+    </div>
   </div>
 </section>
 

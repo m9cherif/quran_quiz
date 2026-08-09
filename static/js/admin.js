@@ -43,6 +43,45 @@ $("btn-logout-admin").addEventListener("click", () => {
   $("admin-key").value = "";
 });
 
+/* ---------------- create your own admin key ---------------- */
+
+$("btn-show-create-key").addEventListener("click", () => {
+  $("create-key-box").hidden = !$("create-key-box").hidden;
+});
+
+$("btn-create-key").addEventListener("click", async () => {
+  const password = $("create-key-password").value;
+  const label = $("create-key-label").value.trim() || null;
+  const errBox = $("create-key-error");
+  errBox.hidden = true;
+  if (!password) { errBox.textContent = "Entrez le mot de passe partagé."; errBox.hidden = false; return; }
+  const btn = $("btn-create-key");
+  btn.disabled = true;
+  btn.textContent = "Création…";
+  try {
+    const data = await API.post("/api/admin/key/generate", { password, label });
+    $("create-key-value").value = data.access_token;
+    $("create-key-result").hidden = false;
+    $("create-key-box").scrollIntoView({ behavior: "smooth" });
+  } catch (err) {
+    errBox.textContent = err.message || "Mot de passe refusé.";
+    errBox.hidden = false;
+  }
+  btn.disabled = false;
+  btn.textContent = "Créer ma clé";
+});
+
+$("btn-copy-new-key").addEventListener("click", () => {
+  const key = $("create-key-value").value;
+  navigator.clipboard
+    ? navigator.clipboard.writeText(key).then(() => {
+        localStorage.setItem(KEY_STORE, key);
+        adminKey = key;
+        loadCompetitions();
+      })
+    : toast("Copiez la clé manuellement.");
+});
+
 if (adminKey) $("admin-key").value = adminKey;
 
 async function loadCompetitions() {

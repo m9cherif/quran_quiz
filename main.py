@@ -19,7 +19,8 @@ from app import context
 from app.config import settings
 from app.database import healthcheck_database
 from app.errors import register_exception_handlers
-from app.routers import admin, health, pages, participants, ws
+from app.security import key_store
+from app.routers import admin, health, keys, pages, participants, ws
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level, logging.INFO),
@@ -88,6 +89,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
 
     context.game.restore_active_questions()
+    await key_store.refresh()
 
     clock_task = asyncio.create_task(context.game.clock_loop())
     heartbeat_task = asyncio.create_task(context.manager.heartbeat_loop())
@@ -132,6 +134,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(health.router)
 app.include_router(pages.router)
+app.include_router(keys.router)
 app.include_router(admin.router)
 app.include_router(participants.router)
 app.include_router(ws.router)

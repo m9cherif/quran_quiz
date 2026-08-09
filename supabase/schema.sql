@@ -133,6 +133,19 @@ CREATE INDEX IF NOT EXISTS idx_answers_question_id
 CREATE INDEX IF NOT EXISTS idx_answers_participant_id
     ON public.answers (participant_id);
 
+-- ---------------------------------------------------------------------------
+-- admin_keys — keys created through the web (POST /api/admin/key/generate).
+-- Only SHA-256 hashes are stored. The env ADMIN_API_KEY remains valid too.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.admin_keys (
+    id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    key_hash   text NOT NULL UNIQUE,
+    label      text,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_keys_key_hash ON public.admin_keys (key_hash);
+
 -- =============================================================================
 -- Security notes
 --

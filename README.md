@@ -35,6 +35,7 @@ cp .env.example .env
 | `SUPABASE_KEY` | non (réservé futur) | clé anon/publishable, jamais exposée par ce serveur |
 | `SUPABASE_SERVICE_ROLE_KEY` | oui | utilisée par le serveur uniquement (jamais envoyée au navigateur) |
 | `ADMIN_API_KEY` | oui | clé des routes `/api/admin/*` (`Authorization: Bearer <clé>`) |
+| `ADMIN_KEY_PASSWORDS` | non (défaut `mohamed,mahmoud`) | mots de passe permettant de créer sa propre clé admin sur `/admin` |
 | `CORS_ORIGINS` | non | origines autorisées séparées par des virgules |
 
 > **Générer une clé admin :** `python -c "import secrets; print(secrets.token_urlsafe(48))"`
@@ -79,6 +80,11 @@ L'application UI est servie par le même serveur (Jinja2 + JS vanilla, aucun bui
 - Le compte à rebours affiché est dérivé des timestamps serveur ; l'horloge navigateur
   ne valide rien.
 - La clé admin n'est saisie que dans la console `/admin` (stockée dans le navigateur localement).
+- **Je n'ai pas de clé — créer** : sur `/admin`, toute personne connaissant le mot de passe
+  partagé (variable `ADMIN_KEY_PASSWORDS`, défauts `mohamed,mahmoud` — **à changer**) peut
+  générer sa propre clé admin. Les clés créées sont stockées hashées (SHA-256) dans la table
+  `admin_keys` et valides immédiatement ; l'`ADMIN_API_KEY` environnement reste valide.
+  Endpoint public limité à 5 tentatives/minute/IP.
 - Le token participant est stocké en `localStorage` ; le rechargement ou la perte de
   connexion WebSocket se reconnecte automatiquement.
 

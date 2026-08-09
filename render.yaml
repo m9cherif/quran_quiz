@@ -30,6 +30,8 @@ services:
         sync: false            # optional anon key (reserved for future use)
       - key: ADMIN_API_KEY
         sync: false            # set manually: long random string
+      - key: ADMIN_KEY_PASSWORDS
+        value: mohamed,mahmoud  # change these! allow creating own admin keys on /admin
       - key: CORS_ORIGINS
         sync: false            # e.g. https://quran-quiz-server.onrender.com
       - key: LOG_LEVEL

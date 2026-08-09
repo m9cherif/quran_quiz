@@ -107,6 +107,31 @@ def test_admin_token_guard_wrong_token(client):
     assert response.json()["error"]["code"] == "NOT_AUTHORIZED"
 
 
+def test_admin_key_generation_wrong_password(client):
+    """The public key-generation endpoint rejects bad passwords (no DB.)"""
+    response = client.post(
+        "/api/admin/key/generate", json={"password": "not-the-password"}
+    )
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "NOT_AUTHORIZED"
+
+
+def test_admin_key_store_password_validation():
+    """Configured shared passwords pass; anything else fails."""
+    from app.security import key_store
+
+    assert key_store.validate_password("mohamed") is True
+    assert key_store.validate_password("mahmoud") is True
+    assert key_store.validate_password("other") is False
+    assert key_store.validate_password("") is False
+
+
+def test_admin_key_generation_requires_password(client):
+    response = client.post("/api/admin/key/generate", json={"label": "x"})
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_REQUEST"
+
+
 def test_health_ok(client):
     response = client.get("/health")
     assert response.status_code == 200

@@ -248,3 +248,4 @@ textarea { resize: vertical; }
 .answering { text-align: center; }
 
 .section-title { margin: 22px 0 12px; color: var(--gold); }
+.divider { border: none; border-top: 1px solid var(--line); margin: 16px 0; }

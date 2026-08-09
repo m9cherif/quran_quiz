@@ -31,6 +31,7 @@ _ALLOWED_TABLES: frozenset[str] = frozenset(
         "questions",
         "choices",
         "answers",
+        "admin_keys",
     }
 )
 

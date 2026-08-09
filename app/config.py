@@ -45,6 +45,7 @@ class Settings:
     supabase_url: str
     supabase_service_role_key: str
     admin_api_key: str
+    admin_key_passwords: tuple[str, ...] = ("mohamed", "mahmoud")
     supabase_key: str = ""
     cors_origins: tuple[str, ...] = field(default_factory=tuple)
     log_level: str = "INFO"
@@ -88,10 +89,16 @@ def load_settings() -> Settings:
     if not origins:
         logger.warning("CORS_ORIGINS is empty: no cross-origin requests will be allowed.")
 
+    raw_passwords = os.getenv("ADMIN_KEY_PASSWORDS", "").strip()
+    passwords: tuple[str, ...] = tuple(
+        pwd.strip() for pwd in raw_passwords.split(",") if pwd.strip()
+    ) if raw_passwords else ("mohamed", "mahmoud")
+
     return Settings(
         supabase_url=os.environ["SUPABASE_URL"].strip(),
         supabase_service_role_key=os.environ["SUPABASE_SERVICE_ROLE_KEY"].strip(),
         admin_api_key=os.environ["ADMIN_API_KEY"].strip(),
+        admin_key_passwords=passwords,
         supabase_key=os.getenv("SUPABASE_KEY", "").strip(),
         cors_origins=origins,
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
