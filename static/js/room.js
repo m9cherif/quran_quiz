@@ -46,6 +46,9 @@ function init() {
   });
   fillWaitingRoom();
   setInterval(pollWaitroom, 4000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) pollWaitroom();
+  });
 }
 
 /* REST fallback poll: keeps the room alive even when WebSockets are

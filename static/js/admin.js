@@ -549,6 +549,7 @@ async function loadPlayers(competitionId) {
   try {
     const rows = await API.get("/api/admin/competitions/" + competitionId + "/participants", adminKey);
     $("players-count").textContent = rows.length;
+    $("comp-connected").textContent = "👥 " + rows.filter((p) => p.connected).length;
     const box = $("players-list");
     if (!rows.length) { box.innerHTML = '<p class="hint">Aucun participant pour l\'instant.</p>'; return; }
     box.innerHTML = rows
