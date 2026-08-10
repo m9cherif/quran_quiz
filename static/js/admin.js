@@ -228,6 +228,13 @@ function onWsMessage(message) {
       endLive();
       break;
     case "error":
+      if (message.code === "NOT_AUTHORIZED") {
+        toast("Session admin expirée — reconnectez-vous.");
+        localStorage.removeItem(KEY_STORE);
+        adminKey = "";
+        show("view-unlock");
+        break;
+      }
       toast(message.message || "Erreur WebSocket.");
       break;
   }

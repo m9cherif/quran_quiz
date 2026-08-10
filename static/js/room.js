@@ -51,6 +51,7 @@ function onStatus(state) {
   if (state === "connected") {
     ws.send({ type: "identify", role: "participant", token });
     identified = true;
+    fillWaitingRoom();
   }
   if (state === "disconnected") {
     identified = false;
@@ -119,11 +120,32 @@ function onMessage(message) {
     case "competition_finished":
       showResults();
       break;
+    case "participant_joined":
+    case "participant_left":
+      fillWaitingRoom();
+      break;
+    case "error":
+      handleWsError(message);
+      break;
   }
+}
+
+function handleWsError(message) {
+  if (message.code === "NOT_AUTHORIZED") {
+    toast("Session expirée — reconnectez-vous.");
+    localStorage.removeItem("quran.token");
+    setTimeout(() => (location.href = "/join"), 800);
+    return;
+  }
+  toast(message.message || "Erreur WebSocket.");
 }
 
 function handleState(state) {
   $("room-status").textContent = statusText(state.status);
+  if (typeof state.participants_connected === "number") {
+    $("room-players").textContent =
+      "👥 " + state.participants_connected + " connectés";
+  }
   if (state.status === "finished") showResults();
 }
 
