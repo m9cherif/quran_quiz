@@ -32,6 +32,7 @@ function show(view) {
 }
 
 function init() {
+  show("view-waiting");
   ws = WSClient(
     "/ws/competition/" + COMPETITION_ID,
     onMessage,

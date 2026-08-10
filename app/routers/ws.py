@@ -172,7 +172,7 @@ async def _handle_identify(
     role, token = identified
 
     if role == "admin":
-        if not is_admin_token(token):
+        if not await is_admin_token(token):
             await websocket.send_json(
                 {
                     "type": EVENT_ERROR,

@@ -177,7 +177,12 @@ def validate_identify(message: dict[str, Any]) -> tuple[Role, str] | None:
     return role, token
 
 
-def is_admin_token(token: str) -> bool:
-    import secrets
+async def is_admin_token(token: str) -> bool:
+    """True when the token is the env key or a key created through the web.
 
-    return secrets.compare_digest(token.encode(), settings.admin_api_key.encode())
+    Delegates to the shared AdminKeyStore so both sources are accepted
+    (env ADMIN_API_KEY + hashed rows in admin_keys).
+    """
+    from app.security import key_store
+
+    return await key_store.is_valid(token)
