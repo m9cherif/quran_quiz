@@ -100,9 +100,11 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def unhandled_error_handler(_: Request, exc: Exception) -> JSONResponse:
         # Log the real exception server-side; never leak it to the client.
         logger.exception("Unhandled exception: %s", type(exc).__name__)
+        excerpt = " — ".join(str(exc).splitlines())[:200]
+        detail = f" ({type(exc).__name__}: {excerpt})" if excerpt else ""
         return JSONResponse(
             status_code=500,
             content=_error_payload(
-                "INTERNAL_SERVER_ERROR", "An unexpected error occurred."
+                "INTERNAL_SERVER_ERROR", "An unexpected error occurred." + detail
             ),
         )
