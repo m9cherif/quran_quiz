@@ -122,6 +122,17 @@ class ConnectionManager:
     ) -> None:
         await self.broadcast(competition_id, message, roles=None)
 
+    async def close_competition(self, competition_id: str) -> None:
+        """Close every live socket of a competition (used at deletion)."""
+        bucket = self._connections.pop(competition_id, None)
+        if not bucket:
+            return
+        for connection in list(bucket):
+            try:
+                await connection.websocket.close(code=1000)
+            except Exception:  # noqa: BLE001 — already gone
+                pass
+
     # -- heartbeat ----------------------------------------------------------
 
     async def heartbeat_loop(self) -> None:

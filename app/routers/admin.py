@@ -185,6 +185,29 @@ async def get_competition(competition_id: str) -> dict[str, Any]:
     return ok(out)
 
 
+@router.delete(
+    "/competitions/{competition_id}",
+    response_model=APISuccess[dict[str, bool]],
+)
+async def delete_competition(competition_id: str) -> dict[str, Any]:
+    """Permanently remove a competition (cascade deletes questions, choices,
+    answers and participants). Only allowed on non-running competitions."""
+    competition = _load_competition(competition_id)
+    if competition["status"] in ("running", "paused"):
+        raise APIError(
+            "COMPETITION_NOT_DELETABLE",
+            "Stop the competition before deleting it.",
+            status_code=409,
+        )
+    context.game.drop(competition_id)
+    await context.manager.close_competition(competition_id)
+    deleted = delete_many("competitions", {"id": competition_id})
+    if not deleted:
+        raise APIError("COMPETITION_NOT_FOUND", "Competition not found.", 404)
+    logger.info("COMPETITION_DELETED id=%s code=%s", competition_id, competition["code"])
+    return ok({"deleted": True})
+
+
 @router.get("/competitions/{competition_id}/participants", response_model=APISuccess[dict[str, Any]])
 async def list_participants(competition_id: str) -> dict[str, Any]:
     """List participants of a competition (names public, tokens never shown)."""

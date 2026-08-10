@@ -231,6 +231,10 @@ class GameService:
     def get_state(self, competition_id: str) -> CompetitionState | None:
         return self._states.get(competition_id)
 
+    def drop(self, competition_id: str) -> None:
+        """Forget all in-memory state for a deleted competition."""
+        self._states.pop(competition_id, None)
+
     def state_for(self, competition: Mapping[str, Any]) -> CompetitionState:
         state = self._states.get(competition["id"])
         if state is None:
