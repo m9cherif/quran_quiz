@@ -90,9 +90,11 @@ def fetch_one(
             query = query.eq(key, value)
         for key, value in (ilike or {}).items():
             query = query.ilike(key, value)
-        result = query.maybe_single().execute()
-        data = result.data
-        return dict(data) if isinstance(data, dict) else None
+        # NB: not using maybe_single() — a known supabase-py bug crashes with
+        # "'NoneType' object has no attribute 'data'" depending on the response.
+        result = query.limit(1).execute()
+        rows = result.data or []
+        return dict(rows[0]) if rows else None
     except APIError:
         raise
     except Exception as exc:  # noqa: BLE001
