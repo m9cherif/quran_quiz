@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from fastapi import APIRouter
@@ -17,7 +18,13 @@ SERVICE_NAME = "quran-competition-server"
 @router.get("/health")
 async def health() -> dict[str, Any]:
     """Liveness check (no database access)."""
-    return ok({"status": "ok", "service": SERVICE_NAME})
+    return ok(
+        {
+            "status": "ok",
+            "service": SERVICE_NAME,
+            "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
+        }
+    )
 
 
 @router.get("/health/database")

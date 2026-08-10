@@ -1,4 +1,4 @@
-"""Supabase access layer.
+﻿"""Supabase access layer.
 
 The server talks to Supabase PostgreSQL through the official SDK.
 - The service-role client performs ALL server-side operations; all payloads are
@@ -97,7 +97,7 @@ def fetch_one(
         raise
     except Exception as exc:  # noqa: BLE001
         logger.error(
-            "DATABASE_ERROR fetch_one(%s): %s", table, type(exc).__name__
+            "DATABASE_ERROR fetch_one(%s): %s — %s", table, type(exc).__name__, exc
         )
         raise _db_error(table) from exc
 
@@ -127,7 +127,7 @@ def fetch_many(
         raise
     except Exception as exc:  # noqa: BLE001
         logger.error(
-            "DATABASE_ERROR fetch_many(%s): %s", table, type(exc).__name__
+            "DATABASE_ERROR fetch_many(%s): %s — %s", table, type(exc).__name__, exc
         )
         raise _db_error(table) from exc
 
@@ -145,7 +145,7 @@ def insert_one(table: str, payload: Mapping[str, Any]) -> dict[str, Any]:
         raise
     except Exception as exc:  # noqa: BLE001
         logger.error(
-            "DATABASE_ERROR insert_one(%s): %s", table, type(exc).__name__
+            "DATABASE_ERROR insert_one(%s): %s — %s", table, type(exc).__name__, exc
         )
         raise _db_error(table) from exc
 
@@ -168,7 +168,7 @@ def update_one(
         raise
     except Exception as exc:  # noqa: BLE001
         logger.error(
-            "DATABASE_ERROR update_one(%s): %s", table, type(exc).__name__
+            "DATABASE_ERROR update_one(%s): %s — %s", table, type(exc).__name__, exc
         )
         raise _db_error(table) from exc
 
@@ -190,7 +190,7 @@ def delete_many(
         raise
     except Exception as exc:  # noqa: BLE001
         logger.error(
-            "DATABASE_ERROR delete_many(%s): %s", table, type(exc).__name__
+            "DATABASE_ERROR delete_many(%s): %s — %s", table, type(exc).__name__, exc
         )
         raise _db_error(table) from exc
 
