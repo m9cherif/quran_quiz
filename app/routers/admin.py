@@ -208,7 +208,7 @@ async def delete_competition(competition_id: str) -> dict[str, Any]:
     return ok({"deleted": True})
 
 
-@router.get("/competitions/{competition_id}/participants", response_model=APISuccess[dict[str, Any]])
+@router.get("/competitions/{competition_id}/participants", response_model=APISuccess[list[dict[str, Any]]])
 async def list_participants(competition_id: str) -> dict[str, Any]:
     """List participants of a competition (names public, tokens never shown)."""
     _load_competition(competition_id)
