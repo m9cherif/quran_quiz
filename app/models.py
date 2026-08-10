@@ -252,8 +252,8 @@ class QuestionOut(BaseModel):
     text: str
     type: QuestionType
     duration_seconds: int
-    points: int
-    negative_points: int
+    points: int | None = None
+    negative_points: int | None = None
     explanation: str | None = None
     audio_url: str | None = None
     surah_number: int | None = None
@@ -285,8 +285,8 @@ class QuestionAdminOut(BaseModel):
     text: str
     type: QuestionType
     duration_seconds: int
-    points: int
-    negative_points: int
+    points: int | None = None
+    negative_points: int | None = None
     explanation: str | None = None
     correct_answer_text: str | None = None
     audio_url: str | None = None
