@@ -8,17 +8,20 @@ from __future__ import annotations
 
 import logging
 import secrets
+from datetime import timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
 from app import context
+from app.config import PRESENCE_WINDOW
 from app.database import (
     delete_many,
     fetch_many,
     fetch_one,
     insert_one,
     is_unique_violation,
+    parse_ts,
     update_one,
     utcnow,
 )
@@ -210,7 +213,12 @@ async def delete_competition(competition_id: str) -> dict[str, Any]:
 
 @router.get("/competitions/{competition_id}/participants", response_model=APISuccess[list[dict[str, Any]]])
 async def list_participants(competition_id: str) -> dict[str, Any]:
-    """List participants of a competition (names public, tokens never shown)."""
+    """List participants of a competition (names public, tokens never shown).
+
+    `connected` is live: true when the participant has an identified
+    WebSocket in this process OR polled the waiting room within the last
+    PRESENCE_WINDOW seconds (REST fallback when sockets are blocked).
+    """
     _load_competition(competition_id)
     rows = fetch_many(
         "participants",
@@ -218,12 +226,16 @@ async def list_participants(competition_id: str) -> dict[str, Any]:
         order="joined_at",
         ascending=True,
     )
+    seen_cutoff = utcnow() - timedelta(seconds=PRESENCE_WINDOW)
+    manager = context.manager
     safe = [
         {
             "id": r["id"],
             "display_name": r["display_name"],
             "participant_code": r.get("participant_code"),
-            "connected": bool(r.get("connected", False)),
+            "connected": _is_connected(
+                manager, competition_id, r["id"], r.get("last_seen_at"), seen_cutoff
+            ),
             "joined_at": r.get("joined_at"),
             "last_seen_at": r.get("last_seen_at"),
             "status": r.get("status"),
@@ -231,6 +243,24 @@ async def list_participants(competition_id: str) -> dict[str, Any]:
         for r in rows
     ]
     return ok(safe)
+
+
+def _is_connected(
+    manager: Any,
+    competition_id: str,
+    participant_id: str,
+    last_seen_at: Any,
+    seen_cutoff: Any,
+) -> bool:
+    """Live WebSocket here, or REST presence within the window."""
+    if manager.is_identified(competition_id, participant_id):
+        return True
+    if last_seen_at is None:
+        return False
+    try:
+        return parse_ts(last_seen_at) >= seen_cutoff
+    except Exception:  # noqa: BLE001 — malformed timestamp → offline
+        return False
 
 
 @router.post("/competitions/{competition_id}/start", response_model=APISuccess[CompetitionOut])

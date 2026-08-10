@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import logging
 import secrets
+from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
 from app import context
-from app.config import settings
+from app.config import PRESENCE_WINDOW, settings
 from app.database import (
     fetch_many,
     fetch_one,
@@ -193,6 +194,11 @@ async def get_waitroom(competition_id: str, request: Request) -> dict[str, Any]:
     competition = fetch_one("competitions", {"id": competition_id})
     if competition is None:
         raise APIError("COMPETITION_NOT_FOUND", "Competition not found.", 404)
+    update_one(
+        "participants",
+        {"id": participant["id"]},
+        {"last_seen_at": iso(utcnow())},
+    )
     state = context.game.get_state(competition_id)
     active: WaitroomQuestion | None = None
     if (
@@ -215,6 +221,19 @@ async def get_waitroom(competition_id: str, request: Request) -> dict[str, Any]:
                 audio_url=question.get("audio_url"),
                 choices=safe_choices(question),
             )
+    participants = fetch_many(
+        "participants",
+        conditions={"competition_id": competition_id},
+        columns="id,last_seen_at",
+    )
+    seen_cutoff = utcnow() - timedelta(seconds=PRESENCE_WINDOW)
+    manager = context.manager
+    connected_participants = sum(
+        1
+        for row in participants
+        if manager.is_identified(competition_id, row["id"])
+        or _recently_seen(row.get("last_seen_at"), seen_cutoff)
+    )
     return ok(
         {
             "competition_id": competition_id,
@@ -223,12 +242,20 @@ async def get_waitroom(competition_id: str, request: Request) -> dict[str, Any]:
             "participant_name": participant["display_name"],
             "participant_code": participant.get("participant_code"),
             "competition_status": competition["status"],
-            "connected_participants": context.manager.count_identified(
-                competition_id
-            ),
+            "connected_participants": connected_participants,
             "active_question": active,
         }
     )
+
+
+def _recently_seen(last_seen_at: Any, cutoff: datetime) -> bool:
+    """True when the participant polled the waiting room recently."""
+    if last_seen_at is None:
+        return False
+    try:
+        return parse_ts(last_seen_at) >= cutoff
+    except Exception:  # noqa: BLE001 — malformed timestamp → offline
+        return False
 
 
 # ---------------------------------------------------------------------------

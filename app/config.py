@@ -51,6 +51,9 @@ class Settings:
     log_level: str = "INFO"
 
 
+PRESENCE_WINDOW = 15  # seconds — REST polling keepalive counts as "connected"
+
+
 def _fail_missing(missing: set[str]) -> None:
     """Print a clear error and stop startup.
 

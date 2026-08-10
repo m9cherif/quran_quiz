@@ -80,6 +80,18 @@ class ConnectionManager:
             1 for c in bucket if c.identified and c.role == "participant"
         )
 
+    def is_identified(self, competition_id: str, participant_id: str) -> bool:
+        """True when the participant has a live identified WebSocket here."""
+        bucket = self._connections.get(competition_id)
+        if not bucket:
+            return False
+        return any(
+            c.identified
+            and c.role == "participant"
+            and c.participant_id == participant_id
+            for c in bucket
+        )
+
     # -- sends --------------------------------------------------------------
 
     async def send_json(self, connection: Connection, message: dict[str, Any]) -> bool:
