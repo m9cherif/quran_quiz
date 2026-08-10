@@ -104,6 +104,39 @@ async def join_competition(payload: JoinRequest) -> dict[str, Any]:
             403,
         )
     now = utcnow().isoformat()
+    existing = fetch_one(
+        "participants",
+        {"competition_id": competition["id"]},
+        columns="*",
+        ilike={"display_name": payload.display_name},
+    )
+    if existing is not None:
+        # Same player coming back (another device/browser): keep their
+        # identity instead of hitting the (competition_id, lower(display_name))
+        # unique constraint. Their token stays valid.
+        logger.info(
+            "PARTICIPANT_REJOIN comp=%s participant=%s",
+            competition["id"], existing["id"],
+        )
+        update_one(
+            "participants",
+            {"id": existing["id"]},
+            {"connected": False, "last_seen_at": now},
+        )
+        return ok(
+            {
+                "competition_id": competition["id"],
+                "competition_name": competition["name"],
+                "competition_status": competition["status"],
+                "participant_id": existing["id"],
+                "participant_code": existing["participant_code"],
+                "display_name": existing["display_name"],
+                "access_token": existing["access_token"],
+                "connected_participants": context.manager.count_identified(
+                    competition["id"]
+                ),
+            }
+        )
     access_token = generate_participant_token()
     participant_code = unique_value(
         "participants",

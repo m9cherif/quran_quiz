@@ -74,14 +74,22 @@ def _check_table(table: str) -> None:
 
 
 def fetch_one(
-    table: str, conditions: Mapping[str, Any], columns: str = "*"
+    table: str,
+    conditions: Mapping[str, Any],
+    columns: str = "*",
+    ilike: Mapping[str, str] | None = None,
 ) -> dict[str, Any] | None:
-    """Fetch a single row matching all conditions, or None."""
+    """Fetch a single row matching all conditions, or None.
+
+    `ilike` adds case-insensitive equality filters (e.g. display_name).
+    """
     _check_table(table)
     try:
         query = get_client().table(table).select(columns)
         for key, value in conditions.items():
             query = query.eq(key, value)
+        for key, value in (ilike or {}).items():
+            query = query.ilike(key, value)
         result = query.maybe_single().execute()
         data = result.data
         return dict(data) if isinstance(data, dict) else None
