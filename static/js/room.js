@@ -46,7 +46,7 @@ function init() {
   });
   fillWaitingRoom();
   setInterval(pollWaitroom, 3000);
-  window.addEventListener("pagehide", announceLeave);
+  window.addEventListener("beforeunload", announceLeave);
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) pollWaitroom();
   });
@@ -55,6 +55,8 @@ function init() {
 let leaveAnnounced = false;
 
 function announceLeave() {
+  /* Fired only on a real close/reload of the page (beforeunload), never when
+     the tab is merely backgrounded — an open tab must stay "connecté". */
   if (leaveAnnounced) return;
   leaveAnnounced = true;
   try {
@@ -90,7 +92,7 @@ async function pollWaitroom() {
     $("room-code-chip").textContent = "#" + (info.competition_code || "?");
   }
   $("room-status").textContent = statusText(info.competition_status);
-  if (liveCount === null) setConnectedCount(info.connected_participants || 0);
+  setConnectedCount(info.connected_participants || 0);
   if (info.competition_status === "finished") {
     showResults();
     return;
@@ -132,7 +134,7 @@ async function fillWaitingRoom() {
     $("room-name").textContent = info.competition_name;
     $("room-status").textContent = statusText(info.competition_status);
     $("room-code-chip").textContent = "#" + (info.competition_code || "?");
-    if (liveCount === null) setConnectedCount(info.connected_participants || 0);
+    setConnectedCount(info.connected_participants || 0);
   } catch (err) {
     if (err.code === "NOT_AUTHORIZED") {
       localStorage.removeItem("quran.token");
@@ -143,7 +145,8 @@ async function fillWaitingRoom() {
   }
 }
 
-/* WS-driven connection count (the REST value may lag behind the socket). */
+/* Connection count: REST poll is authoritative (refreshed every 3 s);
+   WS events only accelerate the display between two polls. */
 let liveCount = null;
 
 function setConnectedCount(count) {
