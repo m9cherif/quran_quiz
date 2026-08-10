@@ -23,6 +23,9 @@ templates = Jinja2Templates(directory="templates")
 templates.env.globals["static_version"] = (
     os.environ.get("RENDER_GIT_COMMIT", "")[:10] or "dev"
 )
+templates.env.globals["app_version"] = (
+    os.environ.get("RENDER_GIT_COMMIT", "")[:7] or "dev"
+)
 
 
 @router.get("/", response_class=HTMLResponse)

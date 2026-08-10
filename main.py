@@ -128,6 +128,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+class NoStoreHtmlMiddleware:
+    """HTML pages must never be cached: the versioned static URLs inside
+    them change per deploy, and a cached page would pin the user to old JS."""
+
+    def __init__(self, app: FastAPI) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        path = scope.get("path", "")
+        html = path == "/" or path == "/join" or path == "/admin" or path.startswith("/room/")
+
+        async def wrapped_send(message) -> None:
+            if html and message["type"] == "http.response.start":
+                headers = list(message.get("headers") or [])
+                headers.append(
+                    (b"cache-control", b"no-store, must-revalidate")
+                )
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, wrapped_send)
+
+
+app.add_middleware(NoStoreHtmlMiddleware)
+
 register_exception_handlers(app)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

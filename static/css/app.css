@@ -250,6 +250,11 @@ textarea { resize: vertical; }
   padding: 12px 18px; border-radius: 12px; font-size: .9rem; font-weight: 600;
   box-shadow: var(--shadow); z-index: 100; max-width: 92vw;
 }
+
+.app-ver {
+  position: fixed; bottom: 6px; right: 10px; z-index: 90;
+  font-size: .6rem; opacity: .45; color: var(--text);
+}
 .answering { text-align: center; }
 
 .section-title { margin: 22px 0 12px; color: var(--gold); }
