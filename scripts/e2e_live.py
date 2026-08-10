@@ -138,15 +138,16 @@ async def e2e(base: str, password: str, wait: float) -> None:
 
     receipt = api(base, "POST", f"/api/competitions/{cid}/answers",
                   {"question_id": qid, "choice_id": c1["id"]}, token=p1["access_token"])
-    check("reponse acceptee + correcte (+10)", receipt["is_correct"] is True
-          and receipt["points"] == 10, str(receipt)[:160])
+    # points may exceed the base value thanks to the speed bonus (fast answer).
+    check("reponse acceptee + correcte (+bonus)", receipt["is_correct"] is True
+          and receipt["points"] >= 10, str(receipt)[:160])
     ev = await expect(ws_admin, "answer_received", wait)
     check("broadcast answer_received (admin)", bool(ev), str(ev)[:160])
 
     board = api(base, "GET", f"/api/competitions/{cid}/leaderboard", token=p1["access_token"])
     top = board[0] if board else {}
-    check("classement: joueur 1 en tete (10 pts)", top.get("display_name") == "Joueur E2E 1"
-          and top.get("score") == 10, str(board)[:160])
+    check("classement: joueur 1 en tete (au moins 10 pts)", top.get("display_name") == "Joueur E2E 1"
+          and top.get("score") >= 10, str(board)[:160])
 
     api(base, "POST", f"/api/admin/competitions/{cid}/finish", token=admin_key)
     ev = await expect(ws_p1, "competition_finished", wait)
