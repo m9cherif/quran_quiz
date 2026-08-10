@@ -258,6 +258,23 @@ def _recently_seen(last_seen_at: Any, cutoff: datetime) -> bool:
         return False
 
 
+@router.post("/{competition_id}/leave", response_model=APISuccess[dict[str, bool]])
+async def leave_competition(competition_id: str, request: Request) -> dict[str, Any]:
+    """Best-effort departure signal fired when the participant closes the page.
+
+    Marks the participant offline immediately; staleness takes over within
+    PRESENCE_WINDOW seconds when the beacon is not delivered.
+    """
+    token = _bearer(request)
+    participant = resolve_participant_row(competition_id, token or "")
+    update_one(
+        "participants",
+        {"id": participant["id"]},
+        {"connected": False, "last_seen_at": None},
+    )
+    return ok({"left": True})
+
+
 # ---------------------------------------------------------------------------
 # Answers — the server is the only time authority.
 # ---------------------------------------------------------------------------

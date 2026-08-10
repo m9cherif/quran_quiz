@@ -51,8 +51,9 @@ class Settings:
     log_level: str = "INFO"
 
 
-PRESENCE_WINDOW = 90  # seconds — REST polling keepalive counts as "connected"
-# Wide enough to survive browser throttling of background tabs (~1 poll/min).
+PRESENCE_WINDOW = 12  # seconds — REST polling keepalive counts as "connected"
+# Real-time semantics: page open (poll every ~3s) = connected; page closed =
+# offline — instantly via the leave beacon, otherwise within this window.
 
 
 def _fail_missing(missing: set[str]) -> None:

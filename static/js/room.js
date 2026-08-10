@@ -45,10 +45,28 @@ function init() {
     location.href = "/";
   });
   fillWaitingRoom();
-  setInterval(pollWaitroom, 4000);
+  setInterval(pollWaitroom, 3000);
+  window.addEventListener("pagehide", announceLeave);
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) pollWaitroom();
   });
+}
+
+let leaveAnnounced = false;
+
+function announceLeave() {
+  if (leaveAnnounced) return;
+  leaveAnnounced = true;
+  try {
+    fetch("/api/competitions/" + COMPETITION_ID + "/leave", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: "{}",
+      keepalive: true,
+    });
+  } catch (err) {
+    /* best effort — staleness covers it within seconds */
+  }
 }
 
 /* REST fallback poll: keeps the room alive even when WebSockets are

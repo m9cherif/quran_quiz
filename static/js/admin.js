@@ -166,7 +166,7 @@ async function openCompetition(id) {
     if (currentComp.status === "running" || currentComp.status === "paused") {
       loadLeaderboard(currentComp.id);
     }
-  }, 5000);
+  }, 3000);
 }
 
 async function loadCompetitionDetail(id) {
