@@ -45,6 +45,43 @@ function init() {
     location.href = "/";
   });
   fillWaitingRoom();
+  setInterval(pollWaitroom, 4000);
+}
+
+/* REST fallback poll: keeps the room alive even when WebSockets are
+   blocked by the network. Never overrides the WS event flow when it works. */
+async function pollWaitroom() {
+  let info;
+  try {
+    info = await API.get(
+      "/api/competitions/" + COMPETITION_ID + "/waitroom",
+      token
+    );
+  } catch (err) {
+    if (err.code === "NOT_AUTHORIZED") {
+      localStorage.removeItem("quran.token");
+      location.href = "/join";
+    }
+    return;
+  }
+  if ($("room-name").textContent !== info.competition_name) {
+    $("room-name").textContent = info.competition_name;
+    $("room-code-chip").textContent = "#" + (info.competition_code || "?");
+  }
+  $("room-status").textContent = statusText(info.competition_status);
+  if (liveCount === null) setConnectedCount(info.connected_participants || 0);
+  if (info.competition_status === "finished") {
+    showResults();
+    return;
+  }
+  if (info.active_question) {
+    renderQuestion(info.active_question);
+  } else if (
+    currentQuestion &&
+    !$("view-question").hidden
+  ) {
+    handleQuestionEnd();
+  }
 }
 
 function onStatus(state) {

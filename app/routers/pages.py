@@ -11,6 +11,8 @@ All real-time logic runs in static/js/* over the existing REST + WebSocket API.
 
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -18,6 +20,9 @@ from fastapi.templating import Jinja2Templates
 router = APIRouter(tags=["ui"])
 
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["static_version"] = (
+    os.environ.get("RENDER_GIT_COMMIT", "")[:10] or "dev"
+)
 
 
 @router.get("/", response_class=HTMLResponse)

@@ -8,6 +8,7 @@ the Supabase keys are not present in the environment.
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
@@ -125,6 +126,7 @@ def test_waitroom_info(client: TestClient, flow: dict[str, Any]):
     data = response.json()["data"]
     assert data["competition_name"] == flow["competition"]["name"]
     assert data["participant_name"] == "Ahmed"
+    assert data["active_question"] is None
 
 
 def test_answer_before_start_rejected(client: TestClient, flow: dict[str, Any]):
@@ -181,6 +183,28 @@ def test_question_start_correct_and_wrong_answers(
     assert wrong.status_code == 200, wrong.text
     assert wrong.json()["data"]["is_correct"] is False
     assert wrong.json()["data"]["points"] == -2.0
+
+
+def test_waitroom_active_question_rest_fallback(
+    client: TestClient, flow: dict[str, Any]
+):
+    """The room can drive itself by REST polling alone (no WebSocket)."""
+    competition_id = flow["competition"]["id"]
+    response = client.get(
+        f"/api/competitions/{competition_id}/waitroom",
+        headers={"Authorization": f"Bearer {flow['a']['access_token']}"},
+    )
+    assert response.status_code == 200
+    active = response.json()["data"]["active_question"]
+    assert active is not None
+    assert active["position"] == 1
+    assert active["text"] == flow["question"]["text"]
+    assert active["duration_seconds"] == 30
+    assert active["ends_at"]
+    assert active["choices"]
+    serialized = json.dumps(active)
+    assert "is_correct" not in serialized
+    assert "correct_answer" not in serialized
 
 
 def test_duplicate_answer_rejected(client: TestClient, flow: dict[str, Any]):

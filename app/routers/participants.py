@@ -19,6 +19,7 @@ from app.database import (
     fetch_one,
     insert_one,
     is_unique_violation,
+    iso,
     parse_ts,
     unique_value,
     update_one,
@@ -32,6 +33,7 @@ from app.game import (
     ANSWER_STATUS_PAUSED,
     check_answer_content,
     compute_points,
+    safe_choices,
 )
 from app.models import (
     APISuccess,
@@ -41,6 +43,7 @@ from app.models import (
     JoinResponse,
     LeaderboardEntry,
     WaitroomInfo,
+    WaitroomQuestion,
 )
 from app.ratelimit import rate_limit
 from app.security import (
@@ -190,6 +193,28 @@ async def get_waitroom(competition_id: str, request: Request) -> dict[str, Any]:
     competition = fetch_one("competitions", {"id": competition_id})
     if competition is None:
         raise APIError("COMPETITION_NOT_FOUND", "Competition not found.", 404)
+    state = context.game.get_state(competition_id)
+    active: WaitroomQuestion | None = None
+    if (
+        state is not None
+        and state.question_id
+        and not state.question_ended_flag
+    ):
+        question = fetch_one(
+            "questions", {"id": state.question_id, "competition_id": competition_id}
+        )
+        if question is not None:
+            active = WaitroomQuestion(
+                question_id=question["id"],
+                position=question["position"],
+                text=question["text"],
+                question_type=question["type"],
+                duration_seconds=question["duration_seconds"],
+                started_at=iso(state.started_at) if state.started_at else None,
+                ends_at=iso(state.ends_at) if state.ends_at else None,
+                audio_url=question.get("audio_url"),
+                choices=safe_choices(question),
+            )
     return ok(
         {
             "competition_id": competition_id,
@@ -201,6 +226,7 @@ async def get_waitroom(competition_id: str, request: Request) -> dict[str, Any]:
             "connected_participants": context.manager.count_identified(
                 competition_id
             ),
+            "active_question": active,
         }
     )
 

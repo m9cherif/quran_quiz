@@ -316,6 +316,20 @@ class CompetitionOut(BaseModel):
     speed_bonus_enabled: bool
 
 
+class WaitroomQuestion(BaseModel):
+    """Safe view of the active question (never contains correct answers)."""
+
+    question_id: str
+    position: int
+    text: str
+    question_type: str
+    duration_seconds: int
+    started_at: str | None = None
+    ends_at: str | None = None
+    audio_url: str | None = None
+    choices: list[ChoiceOut] = Field(default_factory=list)
+
+
 class WaitroomInfo(BaseModel):
     """Waiting room payload for a participant."""
 
@@ -326,6 +340,7 @@ class WaitroomInfo(BaseModel):
     participant_code: str
     competition_status: str
     connected_participants: int
+    active_question: WaitroomQuestion | None = None
 
 
 class JoinResponse(BaseModel):
