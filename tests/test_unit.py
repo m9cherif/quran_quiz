@@ -227,7 +227,8 @@ def test_question_started_payload_has_no_correct_answer():
     assert "correct" not in payload_json.lower()
     assert "Al-Mulk" not in payload_json
     assert payload["question_id"] == "q-1"
-    assert payload["type"] == "text"
+    assert payload["type"] == "question_started"
+    assert payload["question_type"] == "text"
     assert "choices" not in payload
 
 

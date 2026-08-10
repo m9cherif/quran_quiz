@@ -206,7 +206,7 @@ def question_started_payload(
         "question_id": question["id"],
         "position": question["position"],
         "text": question["text"],
-        "type": question["type"],
+        "question_type": question["type"],
         "duration_seconds": question["duration_seconds"],
         "started_at": _iso(started_at),
         "ends_at": _iso(ends_at),
