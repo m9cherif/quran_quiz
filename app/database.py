@@ -99,7 +99,7 @@ def fetch_one(
         logger.error(
             "DATABASE_ERROR fetch_one(%s): %s — %s", table, type(exc).__name__, exc
         )
-        raise _db_error(table) from exc
+        raise _db_error(table, exc) from exc
 
 
 def fetch_many(
@@ -129,7 +129,7 @@ def fetch_many(
         logger.error(
             "DATABASE_ERROR fetch_many(%s): %s — %s", table, type(exc).__name__, exc
         )
-        raise _db_error(table) from exc
+        raise _db_error(table, exc) from exc
 
 
 def insert_one(table: str, payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -147,7 +147,7 @@ def insert_one(table: str, payload: Mapping[str, Any]) -> dict[str, Any]:
         logger.error(
             "DATABASE_ERROR insert_one(%s): %s — %s", table, type(exc).__name__, exc
         )
-        raise _db_error(table) from exc
+        raise _db_error(table, exc) from exc
 
 
 def update_one(
@@ -170,7 +170,7 @@ def update_one(
         logger.error(
             "DATABASE_ERROR update_one(%s): %s — %s", table, type(exc).__name__, exc
         )
-        raise _db_error(table) from exc
+        raise _db_error(table, exc) from exc
 
 
 def delete_many(
@@ -192,10 +192,10 @@ def delete_many(
         logger.error(
             "DATABASE_ERROR delete_many(%s): %s — %s", table, type(exc).__name__, exc
         )
-        raise _db_error(table) from exc
+        raise _db_error(table, exc) from exc
 
 
-def _db_error(table: str) -> APIError:
+def _db_error(table: str, exc: Exception | None = None) -> APIError:
     if table == "admin_keys":
         return APIError(
             "DATABASE_ERROR",
@@ -203,6 +203,16 @@ def _db_error(table: str) -> APIError:
             "supabase/schema.sql in the Supabase SQL editor.",
             status_code=500,
         )
+    if exc is not None:
+        detail = str(exc)
+        if "could not find" in detail.lower() or "schema cache" in detail.lower():
+            return APIError(
+                "DATABASE_ERROR",
+                f"Database table '{table}' is missing from the Supabase "
+                "project — re-run supabase/schema.sql in the Supabase SQL "
+                "editor (it is idempotent).",
+                status_code=404,
+            )
     label = _TABLE_LABELS.get(table, "DATABASE_ERROR")
     message = (
         "The requested resource could not be loaded."
