@@ -12,6 +12,7 @@ let currentComp = null;      // competition row
 let questions = [];
 let liveInfo = null;         // {question_id, position, started_at, ends_at, paused}
 let teller = null;
+let adminPoll = null;
 let answeredCount = 0;
 
 function show(view) {
@@ -149,6 +150,7 @@ $("btn-create").addEventListener("click", async () => {
 async function openCompetition(id) {
   if (ws) ws.close();
   clearInterval(teller);
+  clearInterval(adminPoll);
   try {
     await loadCompetitionDetail(id);
   } catch (err) {
@@ -158,6 +160,13 @@ async function openCompetition(id) {
   show("view-manage");
   ws = WSClient("/ws/competition/" + id, onWsMessage, onWsStatus);
   ws.connect();
+  adminPoll = setInterval(() => {
+    if (!currentComp) return;
+    loadPlayers(currentComp.id);
+    if (currentComp.status === "running" || currentComp.status === "paused") {
+      loadLeaderboard(currentComp.id);
+    }
+  }, 5000);
 }
 
 async function loadCompetitionDetail(id) {
@@ -252,6 +261,7 @@ function updateStatus(status) {
 $("btn-back").addEventListener("click", () => {
   if (ws) ws.close();
   clearInterval(teller);
+  clearInterval(adminPoll);
   loadCompetitions();
 });
 

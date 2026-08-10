@@ -51,7 +51,6 @@ function onStatus(state) {
   if (state === "connected") {
     ws.send({ type: "identify", role: "participant", token });
     identified = true;
-    fillWaitingRoom();
   }
   if (state === "disconnected") {
     identified = false;
@@ -75,8 +74,7 @@ async function fillWaitingRoom() {
     $("room-name").textContent = info.competition_name;
     $("room-status").textContent = statusText(info.competition_status);
     $("room-code-chip").textContent = "#" + (info.competition_code || "?");
-    $("room-players").textContent =
-      "👥 " + (info.connected_participants || 0) + " connectés";
+    if (liveCount === null) setConnectedCount(info.connected_participants || 0);
   } catch (err) {
     if (err.code === "NOT_AUTHORIZED") {
       localStorage.removeItem("quran.token");
@@ -85,6 +83,14 @@ async function fillWaitingRoom() {
     }
     toast(err.message || "Impossible de charger la salle.");
   }
+}
+
+/* WS-driven connection count (the REST value may lag behind the socket). */
+let liveCount = null;
+
+function setConnectedCount(count) {
+  liveCount = count;
+  $("room-players").textContent = "👥 " + count + " connectés";
 }
 
 function statusText(status) {
@@ -121,8 +127,10 @@ function onMessage(message) {
       showResults();
       break;
     case "participant_joined":
+      if (liveCount !== null) setConnectedCount(liveCount + 1);
+      break;
     case "participant_left":
-      fillWaitingRoom();
+      if (liveCount !== null) setConnectedCount(Math.max(0, liveCount - 1));
       break;
     case "error":
       handleWsError(message);
@@ -143,8 +151,7 @@ function handleWsError(message) {
 function handleState(state) {
   $("room-status").textContent = statusText(state.status);
   if (typeof state.participants_connected === "number") {
-    $("room-players").textContent =
-      "👥 " + state.participants_connected + " connectés";
+    setConnectedCount(state.participants_connected);
   }
   if (state.status === "finished") showResults();
 }
