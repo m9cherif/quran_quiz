@@ -91,9 +91,16 @@ async def join_competition(payload: JoinRequest) -> dict[str, Any]:
             404,
         )
     if competition["status"] not in ACCEPTING_STATUSES:
+        hint = {
+            "running": "The competition has already started — joins are closed.",
+            "paused": "The competition is paused — joins are closed.",
+        }.get(
+            competition["status"],
+            "This competition is not accepting new participants right now.",
+        )
         raise APIError(
             "COMPETITION_NOT_ACCEPTING_PARTICIPANTS",
-            "This competition is not accepting new participants right now.",
+            hint,
             403,
         )
     now = utcnow().isoformat()

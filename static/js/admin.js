@@ -264,13 +264,18 @@ async function adminPost(path, okMessage, btn) {
   }
 }
 
-$("btn-start").addEventListener("click", () =>
+$("btn-start").addEventListener("click", () => {
+  if (!confirm(
+    "Lancer maintenant ?\n\nImportant : une fois la compétition lancée, " +
+    "plus personne ne pourra rejoindre. Faites entrer tous les joueurs " +
+    "(code partagé) AVANT de démarrer."
+  )) return;
   adminPost(
     "/api/admin/competitions/" + currentComp.id + "/start",
     "Compétition démarrée !",
     $("btn-start")
-  ).then((data) => { if (data) updateStatus("running"); })
-);
+  ).then((data) => { if (data) updateStatus("running"); });
+});
 $("btn-pause").addEventListener("click", () =>
   adminPost("/api/admin/competitions/" + currentComp.id + "/pause", "⏸ En pause", $("btn-pause"))
 );
