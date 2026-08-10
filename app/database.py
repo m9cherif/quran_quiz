@@ -214,12 +214,21 @@ def _db_error(table: str, exc: Exception | None = None) -> APIError:
                 status_code=404,
             )
     label = _TABLE_LABELS.get(table, "DATABASE_ERROR")
+    hint = ""
+    if exc is not None:
+        excerpt = " — ".join(str(exc).splitlines())[:160]
+        if excerpt:
+            hint = f" ({excerpt}…)"
     message = (
         "The requested resource could not be loaded."
         if label != "DATABASE_ERROR"
         else "A database error occurred."
     )
-    return APIError(label, message, status_code=404 if label != "DATABASE_ERROR" else 500)
+    return APIError(
+        label,
+        message + hint,
+        status_code=404 if label != "DATABASE_ERROR" else 500,
+    )
 
 
 # ---------------------------------------------------------------------------
